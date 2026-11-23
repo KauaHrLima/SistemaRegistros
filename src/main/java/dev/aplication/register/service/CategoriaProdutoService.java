@@ -72,9 +72,10 @@ public class CategoriaProdutoService {
         categoriaProdutoRepository.findByNomeCategoria(nomeCategoriaProduto)
                 .filter(atualizado -> !id.equals(atualizado.getId()))
                 .ifPresent(atualizado -> {
-                    throw new IllegalArgumentException("Nome da categoria do produto ja foi cadastrado no sistema: " + nomeCategoriaProduto);
+                    throw new IllegalArgumentException(
+                            "Nome da categoria do produto ja foi cadastrado no sistema: " + nomeCategoriaProduto);
                 });
-        
+
         categoriaProdutoExistente.setCodigoCategoria(codigoProduto);
         categoriaProdutoExistente.setNomeCategoria(nomeCategoriaProduto);
 
