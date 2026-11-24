@@ -2,6 +2,7 @@ package dev.aplication.register.service;
 
 import java.util.List;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +26,12 @@ public class CategoriaProdutoService {
     @Transactional(readOnly = true)
     public CategoriaProduto buscarPorId(Integer id) {
         return categoriaProdutoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ID da categoria do produto não encontrado: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Categoria não encontrada: " + id));
     }
 
     @Transactional
     public CategoriaProduto salvar(CategoriaProduto categoriaProdutoSalvar) {
-        validarCodigoProduto(categoriaProdutoSalvar);
+        validarCategoria(categoriaProdutoSalvar);
 
         if (categoriaProdutoSalvar.getId() != null) {
             throw new IllegalArgumentException("Para realizar a alteração da categoria, utilize o método atualizar");
@@ -56,7 +57,7 @@ public class CategoriaProdutoService {
             throw new IllegalArgumentException("ID da categoria do produto para atualizar não pode ser nulo: " + id);
         }
 
-        validarCodigoProduto(categoriaProdutoAtualizar);
+        validarCategoria(categoriaProdutoAtualizar);
 
         CategoriaProduto categoriaProdutoExistente = buscarPorId(id);
 
@@ -64,7 +65,7 @@ public class CategoriaProdutoService {
         String nomeCategoriaProduto = categoriaProdutoAtualizar.getNomeCategoria().trim();
 
         categoriaProdutoRepository.findByCodigoCategoria(codigoProduto)
-                .filter(atualizado -> !id.equals(categoriaProdutoAtualizar.getId()))
+            .filter(atualizado -> !id.equals(atualizado.getId()))
                 .ifPresent(atualizado -> {
                     throw new IllegalArgumentException("Código da categoria do produto ja está cadastrado: " + id);
                 });
@@ -88,12 +89,12 @@ public class CategoriaProdutoService {
         categoriaProdutoRepository.delete(categoria);
     }
 
-    private void validarCodigoProduto(CategoriaProduto categoriaProduto) {
+    private void validarCategoria(CategoriaProduto categoriaProduto) {
         if (categoriaProduto == null) {
             throw new IllegalArgumentException("A categoria do produto nao pode ser nula");
         }
 
-        if (categoriaProduto.getCodigoCategoria() == null || categoriaProduto.getNomeCategoria().trim().isEmpty()) {
+        if (categoriaProduto.getCodigoCategoria() == null || categoriaProduto.getCodigoCategoria().trim().isEmpty()) {
             throw new IllegalArgumentException("O código do produto nao pode ser vazio");
         }
 

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.aplication.register.dto.ProdutoRequestDTO;
+import dev.aplication.register.dto.ProdutoResponseDTO;
 import dev.aplication.register.model.Produto;
 import dev.aplication.register.service.ProdutoService;
 import jakarta.validation.Valid;
@@ -27,28 +29,41 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Produto>> listarTodos() {
-        return ResponseEntity.ok(produtoService.listarTodos());
+    public ResponseEntity<List<ProdutoResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(produtoService.listarTodos().stream()
+                .map(ProdutoResponseDTO::fromEntity)
+                .toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(produtoService.buscarPorId(id));
+    public ResponseEntity<ProdutoResponseDTO> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(ProdutoResponseDTO.fromEntity(produtoService.buscarPorId(id)));
     }
 
     @PostMapping
-    public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produtoSalvo) {
-        return ResponseEntity.ok(produtoService.salvar(produtoSalvo));
+    public ResponseEntity<ProdutoResponseDTO> salvar(@Valid @RequestBody ProdutoRequestDTO produtoSalvo) {
+        return ResponseEntity.ok(ProdutoResponseDTO.fromEntity(produtoService.salvar(toEntity(produtoSalvo))));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizar(@Valid @RequestBody Produto produtoAtualizado, Integer id) {
-        return ResponseEntity.ok(produtoService.atualizar(id, produtoAtualizado));
+    public ResponseEntity<ProdutoResponseDTO> atualizar(
+            @PathVariable Integer id, @Valid @RequestBody ProdutoRequestDTO dadosAtualizados) {
+        return ResponseEntity.ok(ProdutoResponseDTO.fromEntity(
+                produtoService.atualizar(id, toEntity(dadosAtualizados))));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
         produtoService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Produto toEntity(ProdutoRequestDTO dados) {
+        Produto produto = new Produto();
+        produto.setCodigoProduto(dados.codigoProduto());
+        produto.setNomeProduto(dados.nomeProduto());
+        produto.setCategoriaId(dados.categoriaId());
+        produto.setQuantidadeProduto(dados.quantidadeProduto());
+        return produto;
     }
 }

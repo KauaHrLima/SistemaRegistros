@@ -3,9 +3,11 @@ package dev.aplication.register.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import dev.aplication.register.repository.CategoriaProdutoRepository;
 import dev.aplication.register.model.Produto;
 import dev.aplication.register.repository.ProdutoRepository;
 
@@ -13,28 +15,29 @@ import dev.aplication.register.repository.ProdutoRepository;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final CategoriaProdutoRepository categoriaProdutoRepository;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
+    public ProdutoService(ProdutoRepository produtoRepository, CategoriaProdutoRepository categoriaProdutoRepository) {
         this.produtoRepository = produtoRepository;
+        this.categoriaProdutoRepository = categoriaProdutoRepository;
     }
 
     @Transactional(readOnly = true)
     public List<Produto> listarTodos() {
-        @SuppressWarnings("unchecked")
-        List<Produto> produtos = (List<Produto>) (List<?>) produtoRepository.findAll();
-        return produtos;
+        return produtoRepository.findAll();
     }
 
     @Transactional(readOnly = true)
     public Produto buscarPorId(Integer id) {
         Object produto = produtoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ID do produto nao encontrado: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado: " + id));
         return (Produto) produto;
     }
 
     @Transactional
     public Produto salvar(Produto produtoSalvar) {
         validarProduto(produtoSalvar);
+        validarCategoriaExistente(produtoSalvar.getCategoriaId());
 
         if (produtoSalvar.getId() != null) {
             throw new IllegalArgumentException("Para mudar o produtoSalvar, use o método atualizar.");
@@ -61,6 +64,7 @@ public class ProdutoService {
         }
 
         validarProduto(produtoAtualizado);
+        validarCategoriaExistente(produtoAtualizado.getCategoriaId());
 
         Produto produtoExistente = buscarPorId(id);
         String codigo = produtoAtualizado.getCodigoProduto().trim();
@@ -105,6 +109,12 @@ public class ProdutoService {
 
         if (produto.getQuantidadeProduto() == null || produto.getQuantidadeProduto() < 0) {
             throw new IllegalArgumentException("Quantidade deve ser maior ou igual a zero");
+        }
+    }
+
+    private void validarCategoriaExistente(Integer categoriaId) {
+        if (!categoriaProdutoRepository.existsById(categoriaId)) {
+            throw new IllegalArgumentException("Categoria não encontrada: " + categoriaId);
         }
     }
 }

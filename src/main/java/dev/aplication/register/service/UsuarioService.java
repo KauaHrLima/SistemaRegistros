@@ -1,7 +1,9 @@
 package dev.aplication.register.service;
 
 import java.util.List;
+import java.util.Objects;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +27,7 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public Usuario buscarPorId(Integer id) {
         return usuarioRespository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ID do usuário nao encontrado: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + id));
     }
 
     @Transactional // @Transactional -> abre uma transição no banco de dados antes de rodar o método
@@ -48,11 +50,7 @@ public class UsuarioService {
         usuario.setCpfUsuario(usuario.getCpfUsuario().trim());
         usuario.setRgUsuario(usuario.getRgUsuario().trim());
 
-        usuarioRespository.findByEmailUsuario(usuario.getEmailUsuario())
-                .filter(existente -> usuario.getId() == null || !existente.getId().equals(usuario.getId()))
-                .ifPresent(existente -> {
-                    throw new IllegalArgumentException("E-mail já cadastrado: " + usuario.getEmailUsuario());
-                });
+        validarDuplicidade(usuario, usuario.getId());
 
         return usuarioRespository.save(usuario);
     }
@@ -61,6 +59,10 @@ public class UsuarioService {
     public Usuario atualizar(Integer id, Usuario dadosAtualizados) {
         if (id == null) {
             throw new IllegalArgumentException("O ID do usuário nao pode ser nulo");
+        }
+
+        if (dadosAtualizados == null) {
+            throw new IllegalArgumentException("Os dados do usuário não podem ser nulos");
         }
 
         if (campoVazio(dadosAtualizados.getNomeUsuario())
@@ -73,20 +75,18 @@ public class UsuarioService {
 
         Usuario usuarioExistente = buscarPorId(id);
 
-        String emailUsuario = dadosAtualizados.getEmailUsuario().trim();
-        String cpfUsuario = dadosAtualizados.getCpfUsuario().trim();
+        dadosAtualizados.setNomeUsuario(dadosAtualizados.getNomeUsuario().trim());
+        dadosAtualizados.setEmailUsuario(dadosAtualizados.getEmailUsuario().trim());
+        dadosAtualizados.setTelefoneUsuario(dadosAtualizados.getTelefoneUsuario().trim());
+        dadosAtualizados.setCpfUsuario(dadosAtualizados.getCpfUsuario().trim());
+        dadosAtualizados.setRgUsuario(dadosAtualizados.getRgUsuario().trim());
+        validarDuplicidade(dadosAtualizados, id);
 
-        usuarioRespository.findByEmailUsuario(emailUsuario)
-                .filter(atualizado -> !id.equals(atualizado.getId()))
-                .filter(atualizado -> {
-                    throw new IllegalArgumentException("CPF de usuário ja cadastrado no sistema: " + cpfUsuario);
-                });
-
-        usuarioExistente.setNomeUsuario(dadosAtualizados.getNomeUsuario().trim());
-        usuarioExistente.setEmailUsuario(dadosAtualizados.getEmailUsuario().trim());
-        usuarioExistente.setTelefoneUsuario(dadosAtualizados.getTelefoneUsuario().trim());
-        usuarioExistente.setCpfUsuario(dadosAtualizados.getCpfUsuario().trim());
-        usuarioExistente.setRgUsuario(dadosAtualizados.getRgUsuario().trim());
+        usuarioExistente.setNomeUsuario(dadosAtualizados.getNomeUsuario());
+        usuarioExistente.setEmailUsuario(dadosAtualizados.getEmailUsuario());
+        usuarioExistente.setTelefoneUsuario(dadosAtualizados.getTelefoneUsuario());
+        usuarioExistente.setCpfUsuario(dadosAtualizados.getCpfUsuario());
+        usuarioExistente.setRgUsuario(dadosAtualizados.getRgUsuario());
 
         return usuarioRespository.save(usuarioExistente);
     }
@@ -105,5 +105,25 @@ public class UsuarioService {
     // declaração privada de valor lógico
     private boolean campoVazio(String valor) {
         return valor == null || valor.trim().isEmpty();
+    }
+
+    private void validarDuplicidade(Usuario usuario, Integer idAtual) {
+        usuarioRespository.findByEmailUsuario(usuario.getEmailUsuario())
+                .filter(existente -> !Objects.equals(idAtual, existente.getId()))
+                .ifPresent(existente -> {
+                    throw new IllegalArgumentException("E-mail já cadastrado: " + usuario.getEmailUsuario());
+                });
+
+        usuarioRespository.findByCpfUsuario(usuario.getCpfUsuario())
+                .filter(existente -> !Objects.equals(idAtual, existente.getId()))
+                .ifPresent(existente -> {
+                    throw new IllegalArgumentException("CPF já cadastrado: " + usuario.getCpfUsuario());
+                });
+
+        usuarioRespository.findByRgUsuario(usuario.getRgUsuario())
+                .filter(existente -> !Objects.equals(idAtual, existente.getId()))
+                .ifPresent(existente -> {
+                    throw new IllegalArgumentException("RG já cadastrado: " + usuario.getRgUsuario());
+                });
     }
 }

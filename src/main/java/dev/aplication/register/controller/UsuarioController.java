@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.aplication.register.dto.UsuarioRequestDTO;
+import dev.aplication.register.dto.UsuarioResponseDTO;
 import dev.aplication.register.model.Usuario;
 import dev.aplication.register.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -26,28 +28,42 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Usuario>> listatTodos() {
-        return ResponseEntity.ok(usuarioService.listarTodos());
+    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(usuarioService.listarTodos().stream()
+                .map(UsuarioResponseDTO::fromEntity)
+                .toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(usuarioService.buscarPorId(id));
+    public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(UsuarioResponseDTO.fromEntity(usuarioService.buscarPorId(id)));
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> salvar(@Valid @RequestBody Usuario usuario) {
-        return ResponseEntity.ok(usuarioService.salvar(usuario));
+    public ResponseEntity<UsuarioResponseDTO> salvar(@Valid @RequestBody UsuarioRequestDTO usuario) {
+        return ResponseEntity.ok(UsuarioResponseDTO.fromEntity(usuarioService.salvar(toEntity(usuario))));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> atualizar(@PathVariable Integer id, @Valid @RequestBody Usuario dadosAtualizado) {
-        return ResponseEntity.ok(usuarioService.atualizar(id, dadosAtualizado));
+    public ResponseEntity<UsuarioResponseDTO> atualizar(
+            @PathVariable Integer id, @Valid @RequestBody UsuarioRequestDTO dadosAtualizados) {
+        return ResponseEntity.ok(UsuarioResponseDTO.fromEntity(
+                usuarioService.atualizar(id, toEntity(dadosAtualizados))));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
         usuarioService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Usuario toEntity(UsuarioRequestDTO dados) {
+        Usuario usuario = new Usuario();
+        usuario.setNomeUsuario(dados.nomeUsuario());
+        usuario.setEmailUsuario(dados.emailUsuario());
+        usuario.setTelefoneUsuario(dados.telefoneUsuario());
+        usuario.setCpfUsuario(dados.cpfUsuario());
+        usuario.setRgUsuario(dados.rgUsuario());
+        return usuario;
     }
 }
