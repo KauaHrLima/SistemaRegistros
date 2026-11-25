@@ -1,4 +1,4 @@
--- Active: 1789165062655@@localhost@5432@UserRegister@public
+-- Active: 1789403982539@@localhost@5432@UserRegister
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
     nome_usuario VARCHAR(120) NOT NULL,
