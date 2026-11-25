@@ -38,3 +38,33 @@ CREATE TABLE produto (
     CONSTRAINT fk_produto_categoria FOREIGN KEY (categoria_id) REFERENCES categoria_produto (id),
     cadastrado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO
+    usuarios (
+        nome_usuario,
+        email_usuario,
+        telefone_usuario,
+        cpf_usuario,
+        rg_usuario
+    )
+VALUES (
+        'João da Silva',
+        'joao.silva@email.com',
+        '(14) 99999-1234',
+        '123.456.789-09',
+        '12.345.678-9'
+    ),
+    (
+        'Maria Oliveira',
+        'maria.oliveira@email.com',
+        '(14) 98888-5678',
+        '987.654.321-00',
+        '98.765.432-1'
+    ),
+    (
+        'Carlos Souza',
+        'carlos.souza@email.com',
+        '(11) 97777-4321',
+        '111.222.333-96',
+        '11.222.333-4'
+    );
